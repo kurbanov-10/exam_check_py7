@@ -30,6 +30,75 @@ def news( limit: int = None , query: str=None):
         
     return data[:limit]
 
-@app.get('/news/{news_id}')
-def news_detail(news_id: int):
-    return {"result": list(filter(lambda item: item['id'] == news_id, new_data))[0]}
+@app.get('/news/{pk}')
+def news_detail(pk: int):
+    return {"result": list(filter(lambda item: item['id'] == pk, new_data))[0]}
+
+
+#user data-> id,full_name, email, role,image
+#get,post,put,delete
+
+user_data=[
+    {"id": 1, "full_name": "User 1", "email": "user1@example.com", "role": "admin", "image": "image1.jpg"},
+    {"id": 2, "full_name": "User 2", "email": "user2@example.com", "role": "user", "image": "image2.jpg"},
+    {"id": 3, "full_name": "User 3", "email": "user3@example.com", "role": "user", "image": "image3.jpg"}
+]
+
+from pydantic import BaseModel
+
+class User(BaseModel):
+    id: int
+    full_name: str
+    email: str
+    role: str
+    image: str
+    
+from datetime import datetime
+from pydantic import Field
+
+class UserCreate(BaseModel):
+    full_name: str
+    email: str
+    role: str
+    
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    email: str | None = None
+    role: str | None = None
+
+class UserDelete(BaseModel):
+    id: int
+    
+    
+
+@app.get('/user/',response_model=list[User])
+def user_list():
+    user=user_data
+    return user
+
+@app.get('/user/{pk}')
+def user_detail(pk: int):
+    return {"result": list(filter(lambda item: item['id'] == pk, user_data))[0]}
+
+@app.post('/user/')
+def user_create(user: UserCreate):
+    user_data.append(user.dict())
+    return {"message": "User created successfully"}
+
+@app.put('/user/')
+def user_update(pk: int, user: UserUpdate):
+        for item in user_data:
+            if item['id'] == pk:
+                if user.full_name is not None:
+                    item['full_name'] = user.full_name
+                if user.email is not None:
+                    item['email'] = user.email
+                if user.role is not None:
+                    item['role'] = user.role
+                break
+        return {"message": "User updated successfully"}
+
+@app.delete('/user/')
+def user_delete(pk: int):
+    user_data[:] = [item for item in user_data if item['id'] != pk]
+    return {"message": "User deleted successfully"}
